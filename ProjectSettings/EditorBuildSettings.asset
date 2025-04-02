@@ -6,6 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Gameplay_1.unity
+    path: Assets/Scenes/01_Village.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/02_CrystalCaverns.unity
+    guid: d332ef304dbc037408408bb774b3ce32
+  - enabled: 1
+    path: Assets/Scenes/03_VibrantMeadow.unity
+    guid: d5cab1a5bbffd4b44a091bc35dcdba24
+  - enabled: 1
+    path: Assets/Scenes/04_Graveyard.unity
+    guid: 6344960401ff9a74fa50557d1934e32d
+  - enabled: 1
+    path: Assets/Scenes/05_SunForge.unity
+    guid: 59144762573a3484ebad0f776ec3b6d9
   m_configObjects: {}

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class QuestObjective{
@@ -18,6 +19,7 @@ public class QuestObjective{
     public string objectiveDescription;
     public string requiredItemOrnpcName; // name of the item or npc required to complete the objective
     public bool isCompleted = false; // is the objective completed? automatically no
+    public string rewardItem; // what you get for completing the quest objective
 }
 
 [System.Serializable]
@@ -38,6 +40,8 @@ public class Quest{
 
     public Action onQuestStarted; // action that is triggered when the quest is started
     public Action onQuestCompleted; // action that is triggered when the quest is completed
+
+    public string questRewardItem; // item you get for completing the quest
 }
 
 public class QuestManager : MonoBehaviour
@@ -130,27 +134,27 @@ public class QuestManager : MonoBehaviour
     }
 
     // Create a new quest
-    public Quest CreateQuest(string questName, string description)
+    public Quest CreateQuest(string questName, string description, string rewardItem)
     {
         Quest newQuest = new Quest
         {
             questName = questName,
             questDescription = description,
-            //isStarted = false,
-            //isCompleted = false
+            questRewardItem = rewardItem
         }; // create a new quest object
         quests.Add(newQuest); // add the new quest to the list of quests
         return newQuest; 
     }
 
     // Add a new objective to the quest
-    public void AddQuestObjective(Quest quest, QuestObjective.ObjectiveType type, string objectiveDescription, string requiredTarget)
+    public void AddQuestObjective(Quest quest, QuestObjective.ObjectiveType type, string objectiveDescription, string requiredTarget, string rewardItem)
     {
-        QuestObjective newObjective = new QuestObjective{
+        QuestObjective newObjective = new QuestObjective
+        {
             objectiveType = type,
             objectiveDescription = objectiveDescription,
             requiredItemOrnpcName = requiredTarget,
-            //isCompleted = false
+            rewardItem = rewardItem
         }; // create a new objective object
 
         quest.questObjectives.Add(newObjective); // add the new objective to the quest
@@ -167,5 +171,35 @@ public class QuestManager : MonoBehaviour
     public bool IsQuestCompleted(string questName)
     {
         return completedQuests.Exists(q => q.questName == questName); // check if the quest is in the list of completed quests
+    }
+
+    // Objective types
+    private void Collect()
+    {
+        // check the player's inventory for the 'item to collect'
+        // if found, update quest UI and mark objective as completed
+    }
+    private void TalkTo()
+    {
+        // take a NPC string name and check if the player has interacted with them
+        // if so, mark objective as complete
+    }
+    private void Explore()
+    {
+        // name each level in the scenes
+        // if the scene's name = explore objective name, complete objective
+    }
+    private void Deliver()
+    {
+        // find the required item
+        // when interacting with the specified deliverTO NPC, update quest objective
+    }
+    private void Kill()
+    {
+        // specify an enemy with string name, if player kills an enemy called that name, update quest objective
+    }
+    private void RecieveRewardItem()
+    {
+        // take the string reward item and find the gameobject with that name?
     }
 }
