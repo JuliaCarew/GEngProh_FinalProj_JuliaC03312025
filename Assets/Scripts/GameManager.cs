@@ -19,19 +19,53 @@ public class GameManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Ensure GameManager persists across scenes
+            DontDestroyOnLoad(gameObject); // ✅ Keeps GameManager alive
+
+            // Ensure QuestManager is assigned
+            if (questManager == null)
+            {
+                questManager = FindObjectOfType<QuestManager>();
+                if (questManager == null)
+                {
+                    Debug.LogError("❌ GameManager: QuestManager is missing in the scene!");
+                }
+                else
+                {
+                    Debug.Log("✅ GameManager: QuestManager assigned.");
+                }
+            }
         }
         else
         {
-            Destroy(gameObject); // Destroy duplicate GameManager instances
+            Destroy(gameObject); // ✅ Prevent duplicate GameManagers
         }
     }
 
     private void Start()
     {
-        if (uiManager == null)
-        {
-            uiManager = FindObjectOfType<UIManager>();
-        }
+        AssignSceneReferences();
+    }
+    private void AssignSceneReferences()
+    {
+        interactibleController = FindObjectOfType<Interactible_Controller>();
+        questManager = FindObjectOfType<QuestManager>();
+        uiManager = FindObjectOfType<UIManager>();
+        playerInventory = FindObjectOfType<PlayerInventory>();
+        dialogueManager = FindObjectOfType<DialogueManager>();
+    }
+
+    private void OnEnable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        AssignSceneReferences();
     }
 }

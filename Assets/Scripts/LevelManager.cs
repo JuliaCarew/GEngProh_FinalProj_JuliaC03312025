@@ -1,16 +1,23 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class LevelManager : MonoBehaviour
 {
-    private GameManager _gameManager;
+    private GameManager gameManager;
+    private QuestManager questManager;
     private string spawnPointName;
+
+    private void Start()
+    {
+        gameManager = GameManager.Instance;
+    }
 
     public void LoadSceneWithSpawnPoint(string sceneName, string spawnPoint)
     {
         spawnPointName = spawnPoint;
         SceneManager.sceneLoaded += OnSceneLoaded; // subscribe 
-        SceneManager.LoadScene(sceneName);
+        SceneManager.LoadScene(sceneName); 
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -18,15 +25,21 @@ public class LevelManager : MonoBehaviour
         SceneManager.sceneLoaded -= OnSceneLoaded; // unsubscribe
         SetPlayerToSpawn();
 
-         if (_gameManager == null)
+        if (gameManager == null)
         {
-            _gameManager = GameManager.Instance; // assign GameManager singleton 
+            gameManager = GameManager.Instance; // assign GameManager singleton 
         }
 
-        if (_gameManager.uiManager == null)
+        if (gameManager.uiManager == null)
         {
-            _gameManager.uiManager = FindObjectOfType<UIManager>();
+            gameManager.uiManager = FindObjectOfType<UIManager>();
         }
+        StartCoroutine(DelayedSceneLoadActions());
+    }
+    private IEnumerator DelayedSceneLoadActions()
+    {
+        yield return new WaitForSeconds(0.1f); // wait for GameManager to initialize
+        gameManager.interactibleController?.CheckExplorationObjectives();
     }
 
     private void SetPlayerToSpawn()

@@ -54,6 +54,10 @@ public class QuestManager : MonoBehaviour
     public List<Quest> activeQuests = new List<Quest>(); // list of all ACTIVE quests in the game
     public List<Quest> completedQuests = new List<Quest>(); // list of all COMPLETED quests in the game
 
+    void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+    }
     void Start()
     {
         gameManager = GameManager.Instance ?? FindObjectOfType<GameManager>();
@@ -82,20 +86,62 @@ public class QuestManager : MonoBehaviour
         }
     }
     
-    public void UpdateQuestObjective(QuestObjective.ObjectiveType objectiveType, string objectiveTarget)
+    public void CheckObjectiveCompletion(QuestObjective.ObjectiveType objectiveType, string objectiveTarget, string secondaryTarget = "")
     {
+        if (activeQuests == null)
+        {
+            Debug.LogError("QuestManager: activeQuests is NULL!");
+            return;
+        }
+
+        if (activeQuests.Count == 0)
+        {
+            Debug.LogWarning("QuestManager: No active quests to check.");
+            return;
+        }
+
         foreach (Quest quest in activeQuests) // loop through all active quests
         {
+            if (quest == null)
+            {
+                Debug.LogError("QuestManager: A quest in activeQuests is NULL!");
+                continue;
+            }
+
             bool questCompleted = true; // assume the quest is completed
 
-            foreach (QuestObjective objective in quest.questObjectives) // loop through all objectives in the quest
+            foreach (var objective in quest.questObjectives) // loop through all objectives in the quest
             {
-                if (objective.objectiveType == objectiveType && objective.requiredItemOrnpcName.ToLower() == objectiveTarget) // if the objective type and target match
+                if (objective == null)
                 {
-                    objective.isCompleted = true; // set the objective as completed
-                    
-                    uiManager.UpdateQuestObjectiveUI(quest); // UIMANAGER: Update UI with new objective
-                    
+                    Debug.LogError($"QuestManager: A quest objective in {quest.questName} is NULL!");
+                    continue;
+                }
+
+                if (objective.isCompleted) continue;
+
+                if (objective.objectiveType == objectiveType && objective.requiredItemOrnpcName.ToLower() == objectiveTarget.ToLower()) // if the objective type and target match
+                {
+                    switch (objectiveType)
+                    {
+                        case QuestObjective.ObjectiveType.Collect:
+                            Collect(objectiveTarget, objective);
+                            break;
+                        case QuestObjective.ObjectiveType.TalkTo:
+                            TalkTo(objectiveTarget, objective);
+                            break;
+                        case QuestObjective.ObjectiveType.Explore:
+                            Explore(objectiveTarget, objective);
+                            break;
+                        case QuestObjective.ObjectiveType.Deliver:
+                            Deliver(objectiveTarget, secondaryTarget, objective);
+                            break;
+                        case QuestObjective.ObjectiveType.Kill:
+                            Kill(objectiveTarget, 1, objective); // Default to 1, could be parameterized
+                            break;
+                        default:
+                            break;
+                    }
                     Debug.Log($"Objective Completed: {objective.objectiveDescription}");
                 }
                 if (!objective.isCompleted){
@@ -103,7 +149,7 @@ public class QuestManager : MonoBehaviour
                 }
             }
             // Complete the quest if all objectives are done
-            if (questCompleted)
+            if (questCompleted && quest.questObjectives.Count > 0)
             {
                 CompleteQuest(quest.questName);
             }
@@ -120,6 +166,10 @@ public class QuestManager : MonoBehaviour
             activeQuests.Remove(questToComplete); // remove the quest from the list of active quests
             completedQuests.Add(questToComplete); // add the quest to the list of completed quests
 
+            if (!string.IsNullOrEmpty(questToComplete.questRewardItem)) // give player reqard item for completing quest
+            {
+                RecieveRewardItem(questToComplete.questRewardItem);
+            }
             if (!string.IsNullOrEmpty(questToComplete.completeDialogue)) // if the quest has a complete dialogue
             {
                 dialogueManager.StartDialogue(new string[] { questToComplete.completeDialogue }); // start the dialogue for the quest
@@ -174,32 +224,89 @@ public class QuestManager : MonoBehaviour
     }
 
     // Objective types
-    private void Collect()
+    private void Collect(string itemName, QuestObjective objective)
     {
         // check the player's inventory for the 'item to collect'
         // if found, update quest UI and mark objective as completed
+        if (gameManager.playerInventory.CheckInventoryForItem(itemName))
+        {
+            CompleteObjective(objective);
+        }
     }
-    private void TalkTo()
+    private void TalkTo(string npcName, QuestObjective objective)
     {
         // take a NPC string name and check if the player has interacted with them
         // if so, mark objective as complete
+        
     }
-    private void Explore()
+    private void Explore(string areaName, QuestObjective objective)
     {
         // name each level in the scenes
         // if the scene's name = explore objective name, complete objective
+        string currentScene = SceneManager.GetActiveScene().name;
+        if (currentScene.Equals(areaName, StringComparison.OrdinalIgnoreCase))
+        {
+            CompleteObjective(objective);
+        }
     }
-    private void Deliver()
+    private void Deliver(string itemToDeliver, string npcName, QuestObjective objective)
     {
-        // find the required item
+        // check the player's inventory for the 'item to deliver'
+        // if found, remove it from the inventory and update quest objective
         // when interacting with the specified deliverTO NPC, update quest objective
+        if (gameManager.playerInventory.CheckInventoryForItem(itemToDeliver))
+        {
+            gameManager.playerInventory.RemoveItemFromInventory(itemToDeliver);
+            CompleteObjective(objective);
+        }
     }
-    private void Kill()
+    
+    private void Kill(string enemyName, int amountToKill, QuestObjective objective)
     {
         // specify an enemy with string name, if player kills an enemy called that name, update quest objective
+        CompleteObjective(objective);
     }
-    private void RecieveRewardItem()
+
+    private void CompleteObjective(QuestObjective objective)
+    {
+        if (objective == null) return;
+        
+        objective.isCompleted = true;
+        
+        if (!string.IsNullOrEmpty(objective.rewardItem))
+        {
+            RecieveRewardItem(objective.rewardItem);
+        }
+        
+        // Find which quest this objective belongs to for UI update
+        Quest parentQuest = activeQuests.Find(q => q.questObjectives.Contains(objective));
+        if (parentQuest != null)
+        {
+            uiManager.UpdateQuestObjectiveUI(parentQuest);
+        }
+        
+        Debug.Log($"Objective Completed: {objective.objectiveDescription}");
+    }
+    private void RecieveRewardItem(string rewardItem)
     {
         // take the string reward item and find the gameobject with that name?
+        gameManager.playerInventory.AddItemToInventory(rewardItem);
+        Debug.Log($"Received reward item: {rewardItem}");
+    }
+
+
+    public bool HasTalkToObjective(string npcName)
+    {
+        foreach (Quest quest in activeQuests)
+        {
+            foreach (QuestObjective objective in quest.questObjectives)
+            {
+                if (objective.requiredItemOrnpcName == npcName)
+                {
+                    return true; // found an active quest that requires talking to this NPC
+                }
+            }
+        }
+        return false; // no active TalkTo objective for this NPC
     }
 }

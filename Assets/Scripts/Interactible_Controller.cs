@@ -12,25 +12,29 @@ public class Interactible_Controller : MonoBehaviour
     private QuestManager questManager;
 
     public bool isQuestItem;
+    public bool isQuestNPC;
+    public string NPCName; // will be assigned in Dialogue method
+    public string questToStart; // Quest to start when interacting with this NPC
+    public string questToComplete; // Quest to check for completion when interacting
+    public string questToCheck; // Quest to check progress for specific dialogue
 
     // IMPORTANT: when adding new item, make sure to name it in all LOWER CASE, otherwise it will not be found in the inventory
-    // make this an ENUM so multiple things can trigger dialogue (like exploring an area for a quest)
-    // need: item
-    // need: explored area
-    // need: monster killed
-    // need: talked to NPC
     [System.Serializable] // allows for the creation of a new class in the inspector
     public class DialogueCondition{
         public enum ConditionType
         {
             Default,
-            itemCollected,
-            areaExplored,
-            monsterKilled,
-            NPCTalkedTo
+            ItemCollected,
+            AreaExplored,
+            MonsterKilled,
+            NPCTalkedTo,
+            QuestActive,
+            QuestCompleted,
+            QuestObjectiveCompleted
         }
         public ConditionType conditionType;
-        public static string requiredConditionName; // name of the item required to trigger the dialogue event ID
+        public string requiredConditionName; // name of the item required to trigger the dialogue event ID
+        public string secondaryConditionName; // For multiple conditions (like deliver item to NPC)
         [TextArea]
         public string[] conditionalDialogue; // dialogue that is triggered if the player has the item
     }
@@ -50,9 +54,31 @@ public class Interactible_Controller : MonoBehaviour
 
     void Start()
     {
-        gameManager = GameManager.Instance ?? FindObjectOfType<GameManager>();
-        dialogueManager = gameManager?.dialogueManager ?? FindObjectOfType<DialogueManager>();
-        questManager = gameManager?.questManager ?? FindObjectOfType<QuestManager>();
+        StartCoroutine(InitializeAfterDelay());
+    }
+    private IEnumerator InitializeAfterDelay()
+    {
+        yield return new WaitForSeconds(0.1f); 
+
+        gameManager = GameManager.Instance;
+
+        if (gameManager == null)
+        {
+            Debug.LogError("interactibleController: GameManager instance is NULL!");
+            yield break;
+        }
+
+        dialogueManager = gameManager.dialogueManager;
+        questManager = gameManager.questManager;
+
+        if (questManager == null)
+        {
+            Debug.LogError("interactibleController: QuestManager is NULL!");
+        }
+        else
+        {
+            Debug.Log("interactibleController: QuestManager successfully assigned.");
+        }
     }
     
     public void Interact(){
@@ -68,9 +94,11 @@ public class Interactible_Controller : MonoBehaviour
                 Info();
                 break;
             case InteractibleType.Dialogue:
-                Dialogue(ConditionType.areaExplored); // want to be able to change this to current condition type
-                break;
+                Dialogue(); 
+                break;                       
         }
+        // Check for quest-related interactions after checking everything else
+        ProcessQuestInteraction();
     }
     private void Default()
     {
@@ -80,86 +108,168 @@ public class Interactible_Controller : MonoBehaviour
     {
         StartCoroutine(gameManager.uiManager.DisplayPickUpText("picked up " + gameObject.name));
         Debug.Log($"InterController: Picking up {gameObject.name}");
-        this.gameObject.SetActive(false); // object disappears
-
+        
         // INVENTORY: Generic pickup to add any item to inventory
         gameManager.playerInventory.AddItemToInventory(gameObject.name.ToLower());
         Debug.Log($"InterController: {gameObject.name} added to inventory");
 
-        // !! should first be checking if its a quest item
         // QUEST: Update quest objective when quest item is picked up
         if (isQuestItem)
         {
-            questManager.UpdateQuestObjective(
+            questManager.CheckObjectiveCompletion(
             QuestObjective.ObjectiveType.Collect,
-            gameObject.name
+            gameObject.name.ToLower()
             );
         }
+
+        this.gameObject.SetActive(false); // object disappears
     }
 
     // Info next to player's head, for inner thoughts in info on objects
-    void Info()
+    private void Info()
     {
         Debug.Log($"InterController: displaying info text");
         StartCoroutine(gameManager.uiManager.DisplayInfoText());
     }
 
-    private void Dialogue(ConditionType conditionType) // need to specify unique logic for different dialogue conditions
+    private void Dialogue()  
     {
-        switch (conditionType)
+        // Assign NPC name if not already set
+        if (string.IsNullOrEmpty(NPCName))
         {
-            case ConditionType.Default:
-                Debug.Log("Dialogue condition checking: default");
-                break;
-            case ConditionType.itemCollected:
-                CheckItemCollected();
-                break;
-            case ConditionType.areaExplored:
-                CheckAreaExplored();
-                break;
-            case ConditionType.monsterKilled:
-                CheckMonsterKilled();
-                break;
-            case ConditionType.NPCTalkedTo:
-                CheckNPCTalkedTo();
-                break;
+            NPCName = gameObject.name;
+            Debug.Log($"InterController: NPC name set to {NPCName}");
         }
+
+        string[] dialogueToShow = defaultDialogue;
+        bool conditionMet = false;
 
         foreach (var condition in dialogueConditions) // loop through all the conditions
         {
-            if (gameManager.playerInventory.CheckInventoryForItem(requiredConditionName)) // check if player has the item
+            if (CheckCondition(condition))
             {
-                // DIALOGUE: If item is found, start dialogue for this condition
-                dialogueManager.StartDialogue(condition.conditionalDialogue);
-                return;
+                dialogueToShow = condition.conditionalDialogue;
+                conditionMet = true;
+                break;
             }
         }
         // DIALOGUE: If no conditions are met, start default dialogue
         dialogueManager.StartDialogue(defaultDialogue);
-    }
-    private void CheckItemCollected()
-    {
-        Debug.Log("Dialogue condition checking: item collected");
-    }
-    private void CheckAreaExplored()
-    {
-        Debug.Log("Dialogue condition checking: area explored");
-        Scene scene = SceneManager.GetActiveScene();
 
-        if (scene.name == requiredConditionName) // needs to reference the string put in here
+        // If it's an NPC talk objective and a condition was met
+        if (isQuestNPC && conditionMet)
         {
-            questManager.UpdateQuestObjective(
-            QuestObjective.ObjectiveType.Explore,
-            gameObject.name
+            questManager.CheckObjectiveCompletion(
+                QuestObjective.ObjectiveType.TalkTo,
+                NPCName.ToLower()
             );
         }
     }
-    private void CheckMonsterKilled()
+
+    private bool CheckCondition(DialogueCondition condition)
     {
-        Debug.Log("Dialogue condition checking: monster killed");
+        switch (condition.conditionType)
+        {
+            case DialogueCondition.ConditionType.ItemCollected: // take out dialoguecondition?
+                Debug.Log("checking dialogue condition type: Item Collected");
+                return gameManager.playerInventory.CheckInventoryForItem(condition.requiredConditionName);
+                
+            case DialogueCondition.ConditionType.AreaExplored:
+                return SceneManager.GetActiveScene().name.Equals(
+                    condition.requiredConditionName, 
+                    System.StringComparison.OrdinalIgnoreCase
+                );
+                
+            case DialogueCondition.ConditionType.MonsterKilled:
+                // need to track monster kills in GameManager
+                return false;
+                
+            case DialogueCondition.ConditionType.NPCTalkedTo:
+                // need to track NPC interactions !!! check if NPCName is requiredItemOrnpcName
+                return questManager.HasTalkToObjective(NPCName);
+                
+            case DialogueCondition.ConditionType.QuestActive:
+                return questManager.IsQuestActive(condition.requiredConditionName);
+                
+            case DialogueCondition.ConditionType.QuestCompleted:
+                return questManager.IsQuestCompleted(condition.requiredConditionName);
+                
+            case DialogueCondition.ConditionType.QuestObjectiveCompleted:
+                // need additional methods in QuestManager to check specific objectives
+                return false;
+                
+            default:
+                return false;
+        }
     }
-    private void CheckNPCTalkedTo()
+
+    private void ProcessQuestInteraction()
     {
-        Debug.Log("Dialogue condition checking: NPC talked to");
+        // If this is a Quest NPC that starts a quest
+        if (isQuestNPC && !string.IsNullOrEmpty(questToStart))
+        {
+            // Only start the quest if it's not already active or completed
+            if (!questManager.IsQuestActive(questToStart) && !questManager.IsQuestCompleted(questToStart))
+            {
+                questManager.StartQuest(questToStart);
+            }
+        }
+
+        // If this is a Quest NPC that completes a quest
+        if (isQuestNPC && !string.IsNullOrEmpty(questToComplete))
+        {
+            // Check if the quest is active before trying to complete it
+            if (questManager.IsQuestActive(questToComplete))
+            {
+                // Check if this is a delivery quest
+                foreach (var condition in dialogueConditions)
+                {
+                    if (condition.conditionType == DialogueCondition.ConditionType.ItemCollected && 
+                        gameManager.playerInventory.CheckInventoryForItem(condition.requiredConditionName))
+                    {
+                        // Process the delivery - remove item and update objective
+                        gameManager.playerInventory.RemoveItemFromInventory(condition.requiredConditionName);
+                        
+                        questManager.CheckObjectiveCompletion(
+                            QuestObjective.ObjectiveType.Deliver,
+                            condition.requiredConditionName,
+                            NPCName.ToLower()
+                        );
+                        
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // update exploration objectives when entering a new scene
+    public void CheckExplorationObjectives()
+    {
+        if (questManager == null)
+        {
+            Debug.LogWarning("⚠️ CheckExplorationObjectives called before QuestManager was assigned. Retrying...");
+            StartCoroutine(DelayedCheckObjectives());
+            return;
+        }
+
+        string currentScene = SceneManager.GetActiveScene().name;
+        questManager.CheckObjectiveCompletion( // getting null error on scene loading
+            QuestObjective.ObjectiveType.Explore,
+            currentScene.ToLower()
+        );
+    }
+    private IEnumerator DelayedCheckObjectives()
+    {
+        yield return new WaitForSeconds(0.1f); // give time for initialization
+        CheckExplorationObjectives(); 
+    }
+    // when a monster is killed
+    public void NotifyMonsterKilled(string monsterName)
+    {
+        questManager.CheckObjectiveCompletion(
+            QuestObjective.ObjectiveType.Kill,
+            monsterName.ToLower()
+        );
     }
 }

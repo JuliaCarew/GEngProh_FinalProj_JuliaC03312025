@@ -101,11 +101,12 @@ public class UIManager : MonoBehaviour
     // ***** QUESTS ***** //
     public void DisplayQuestStartNotification(Quest quest)
     {
-        StartCoroutine(ShowQuestStartNotification(quest));
+        //StartCoroutine(ShowQuestStartNotification(quest));
+        ShowQuestStartNotification(quest);
     }
 
     /// Show the quest start notification for a specific quest
-    private IEnumerator ShowQuestStartNotification(Quest quest)
+    private void ShowQuestStartNotification(Quest quest)
     {
         questNotificationPanel.SetActive(true);
         questTitleText.text = quest.questName;
@@ -116,8 +117,8 @@ public class UIManager : MonoBehaviour
             currentObjectiveText.text = quest.questObjectives[0].objectiveDescription;
         }
 
-        yield return new WaitForSeconds(5);
-        questNotificationPanel.SetActive(false);
+        //yield return new WaitForSeconds(5);
+        //questNotificationPanel.SetActive(false);
     }
 
     // Update the quest objective UI when a quest is updated
@@ -132,7 +133,7 @@ public class UIManager : MonoBehaviour
             questTitleText.text = quest.questName;
             currentObjectiveText.text = currentObjective.objectiveDescription;
 
-            StartCoroutine(HideQuestNotificationAfterDelay());
+            //StartCoroutine(HideQuestNotificationAfterDelay());
         }
     }
 

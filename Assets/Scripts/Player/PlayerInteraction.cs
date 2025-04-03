@@ -24,7 +24,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (other.gameObject.tag == "Interactible")
         {
-            Debug.Log($"Out of range for interactibles");
+            //Debug.Log($"Out of range for interactibles");
             currentInteractible = null;
         }
     }
