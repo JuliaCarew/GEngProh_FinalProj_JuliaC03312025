@@ -45,4 +45,5 @@ public class PlayerInventory : MonoBehaviour
     public List<string> GetInventoryItemList(){
         return new List<string>(inventory);
     }
+    // have method to get item icons from inventory (make this UI Manager?) UI manager needs to display item icons in ShowInventory method
 }

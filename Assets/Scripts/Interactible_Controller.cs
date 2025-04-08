@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -154,15 +155,16 @@ public class Interactible_Controller : MonoBehaviour
             }
         }
         // DIALOGUE: If no conditions are met, start default dialogue
-        dialogueManager.StartDialogue(defaultDialogue);
+        dialogueManager.StartDialogue(dialogueToShow);
 
         // If it's an NPC talk objective and a condition was met
-        if (isQuestNPC && conditionMet)
+        if (isQuestNPC)
         {
             questManager.CheckObjectiveCompletion(
                 QuestObjective.ObjectiveType.TalkTo,
                 NPCName.ToLower()
             );
+            Debug.Log($"Interacted with NPC: {NPCName}. Checking if TalkTo objective is completed.");
         }
     }
 
@@ -216,27 +218,36 @@ public class Interactible_Controller : MonoBehaviour
         }
 
         // If this is a Quest NPC that completes a quest
-        if (isQuestNPC && !string.IsNullOrEmpty(questToComplete))
+        if (isQuestNPC)
         {
-            // Check if the quest is active before trying to complete it
-            if (questManager.IsQuestActive(questToComplete))
+            // check active quests for any delivery objectives matching this NPC
+            foreach (var quest in questManager.activeQuests)
             {
-                // Check if this is a delivery quest
-                foreach (var condition in dialogueConditions)
+                foreach (var objective in quest.questObjectives)
                 {
-                    if (condition.conditionType == DialogueCondition.ConditionType.ItemCollected && 
-                        gameManager.playerInventory.CheckInventoryForItem(condition.requiredConditionName))
+                    if (objective.objectiveType == QuestObjective.ObjectiveType.Deliver && 
+                    !objective.isCompleted)
                     {
-                        // Process the delivery - remove item and update objective
-                        gameManager.playerInventory.RemoveItemFromInventory(condition.requiredConditionName);
-                        
-                        questManager.CheckObjectiveCompletion(
-                            QuestObjective.ObjectiveType.Deliver,
-                            condition.requiredConditionName,
-                            NPCName.ToLower()
-                        );
-                        
-                        break;
+                        // Check if this NPC is the delivery target
+                        if (NPCName.ToLower() == objective.deliverToNpcName.ToLower())
+                        {
+                            // Check if player has the required item
+                            if (gameManager.playerInventory.CheckInventoryForItem(objective.requiredItemOrnpcName))
+                            {
+                                Debug.Log($"Processing delivery of {objective.requiredItemOrnpcName} to {NPCName}");
+                            
+                                // Process the delivery
+                                questManager.CheckObjectiveCompletion(
+                                    QuestObjective.ObjectiveType.Deliver,
+                                    objective.requiredItemOrnpcName,
+                                    NPCName.ToLower()
+                                );
+                            }
+                            else
+                            {
+                                Debug.Log($"Player does not have required item {objective.requiredItemOrnpcName} for delivery to {NPCName}");
+                            }
+                        }
                     }
                 }
             }

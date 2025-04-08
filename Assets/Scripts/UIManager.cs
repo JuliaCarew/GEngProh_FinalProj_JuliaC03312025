@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
@@ -29,6 +30,13 @@ public class UIManager : MonoBehaviour
     [Header("Quest UI")]
     public GameObject questNotificationPanel;
     public GameObject questCompletedPanel;
+    [SerializeField] private GameObject rewardPanel;
+    [SerializeField] private TextMeshProUGUI rewardItemText;
+    [SerializeField] private Image rewardItemIcon;
+
+    [Header("Player Inventory UI")]
+    public GameObject inventoryPanel;
+    public GameObject[] inventoryItems; // inventory item UI element
 
     public TextMeshProUGUI questTitleText;
     public TextMeshProUGUI questDescriptionText;
@@ -158,5 +166,38 @@ public class UIManager : MonoBehaviour
     {
         yield return new WaitForSeconds(5);
         questNotificationPanel.SetActive(false);
+    }
+
+    public void ShowAquireReward(string rewardItem)
+    {
+        rewardPanel.SetActive(true);
+        rewardItemText.text = $"Obtained: {rewardItem} "+ "for completing the quest!"; 
+        // set the icon for the reward item
+        // rewardItemIcon.sprite = questManager.GetRewardItemIcon(rewardItem); 
+    }
+    public void HideRewardPanel()
+    {
+        rewardPanel.SetActive(false);
+    }
+
+    // use GetInventoryItemList() to get item list from inventory, then use this method to display item icons in UI
+    public void ShowInventory()
+    {
+        if (inventoryPanel != null)
+        {
+            bool isActive = inventoryPanel.activeSelf;
+            inventoryPanel.SetActive(!isActive);
+        
+            // Additional logic for when inventory is opened/closed
+            if (!isActive)
+            {
+                // Refresh inventory display when opening
+                //UpdateInventoryUI();
+            }
+        }
+        else
+        {
+            Debug.LogError("Inventory panel reference is missing in UIManager");
+        }
     }
 }

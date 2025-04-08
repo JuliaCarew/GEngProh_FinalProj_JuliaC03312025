@@ -18,6 +18,7 @@ public class QuestObjective{
     public ObjectiveType objectiveType; // type of objective
     public string objectiveDescription;
     public string requiredItemOrnpcName; // name of the item or npc required to complete the objective
+    public string deliverToNpcName; // name of the npc to deliver the item to (if applicable)
     public bool isCompleted = false; // is the objective completed? automatically no
     public string rewardItem; // what you get for completing the quest objective
 }
@@ -100,7 +101,7 @@ public class QuestManager : MonoBehaviour
             return;
         }
 
-        foreach (Quest quest in activeQuests) // loop through all active quests
+        foreach (Quest quest in activeQuests) // loop through all active quests (causing error on quest completed, collection was modified during iteration) 
         {
             if (quest == null)
             {
@@ -120,29 +121,41 @@ public class QuestManager : MonoBehaviour
 
                 if (objective.isCompleted) continue;
 
-                if (objective.objectiveType == objectiveType && objective.requiredItemOrnpcName.ToLower() == objectiveTarget.ToLower()) // if the objective type and target match
+                if (objective.objectiveType == objectiveType)
                 {
-                    switch (objectiveType)
+                    // For Deliver objectives, check if the item name matches
+                    if (objectiveType == QuestObjective.ObjectiveType.Deliver)
                     {
-                        case QuestObjective.ObjectiveType.Collect:
-                            Collect(objectiveTarget, objective);
-                            break;
-                        case QuestObjective.ObjectiveType.TalkTo:
-                            TalkTo(objectiveTarget, objective);
-                            break;
-                        case QuestObjective.ObjectiveType.Explore:
-                            Explore(objectiveTarget, objective);
-                            break;
-                        case QuestObjective.ObjectiveType.Deliver:
+                        Debug.Log($"Checking Deliver: Item={objectiveTarget}, NPC={secondaryTarget}, Required={objective.requiredItemOrnpcName}, DeliverTo={objective.deliverToNpcName}");
+                    
+                        // Check if this is the right delivery objective
+                        if (objective.requiredItemOrnpcName.ToLower() == objectiveTarget.ToLower())
+                        {
                             Deliver(objectiveTarget, secondaryTarget, objective);
-                            break;
-                        case QuestObjective.ObjectiveType.Kill:
-                            Kill(objectiveTarget, 1, objective); // Default to 1, could be parameterized
-                            break;
-                        default:
-                            break;
+                        }
                     }
-                    Debug.Log($"Objective Completed: {objective.objectiveDescription}");
+                    // For other objective types, check if the target matches the required name
+                    else if (objective.requiredItemOrnpcName.ToLower() == objectiveTarget.ToLower())
+                    {
+                        switch (objectiveType)
+                        {
+                            case QuestObjective.ObjectiveType.Collect:
+                                Collect(objectiveTarget, objective);
+                                break;
+                            case QuestObjective.ObjectiveType.TalkTo:
+                                TalkTo(objectiveTarget, objective);
+                                break;
+                            case QuestObjective.ObjectiveType.Explore:
+                                Explore(objectiveTarget, objective);
+                                break;
+                            case QuestObjective.ObjectiveType.Kill:
+                                Kill(objectiveTarget, 1, objective);
+                                break;
+                            default:
+                                break;
+                        }
+                        Debug.Log($"Objective Completed: {objective.objectiveDescription}");
+                    }
                 }
                 if (!objective.isCompleted){
                     questCompleted = false; // if any objective is not completed, the quest is not completed
@@ -180,6 +193,7 @@ public class QuestManager : MonoBehaviour
             questToComplete.onQuestCompleted?.Invoke(); // invoke the action for when the quest is completed
 
             Debug.Log($"Quest Completed: {questName}");
+            // set all quest panel UI to false
         }
     }
 
@@ -237,7 +251,18 @@ public class QuestManager : MonoBehaviour
     {
         // take a NPC string name and check if the player has interacted with them
         // if so, mark objective as complete
-        
+        if (objective.isCompleted) return;
+
+        // Log for debugging
+        Debug.Log($"Checking TalkTo objective: {objective.objectiveDescription} for NPC: {npcName} vs required: {objective.requiredItemOrnpcName}");
+
+        // Check if the NPC name matches the required NPC for the quest objective
+        if (npcName.Equals(objective.requiredItemOrnpcName, StringComparison.OrdinalIgnoreCase))
+        {
+            // Objective is completed when the correct NPC is interacted with
+            CompleteObjective(objective);
+            Debug.Log($"TalkTo objective completed for NPC: {npcName}");
+        }
     }
     private void Explore(string areaName, QuestObjective objective)
     {
@@ -254,10 +279,28 @@ public class QuestManager : MonoBehaviour
         // check the player's inventory for the 'item to deliver'
         // if found, remove it from the inventory and update quest objective
         // when interacting with the specified deliverTO NPC, update quest objective
-        if (gameManager.playerInventory.CheckInventoryForItem(itemToDeliver))
+        if (objective.deliverToNpcName == null)
         {
+            Debug.LogError($"Delivery objective for {itemToDeliver} has null deliverToNpcName!");
+            return;
+        }
+        
+        Debug.Log($"Checking delivery: Item={itemToDeliver}, NPC={npcName}, Target NPC={objective.deliverToNpcName}");
+
+        if (gameManager.playerInventory.CheckInventoryForItem(itemToDeliver) && 
+        npcName.ToLower() == objective.deliverToNpcName.ToLower())
+        {
+            // Remove the item from inventory
             gameManager.playerInventory.RemoveItemFromInventory(itemToDeliver);
+        
+            // Complete the objective
             CompleteObjective(objective);
+        
+            Debug.Log($"Delivered {itemToDeliver} to {npcName}. Objective completed!");
+        }
+        else
+        {
+            Debug.Log($"Cannot complete delivery objective. Item in inventory: {gameManager.playerInventory.CheckInventoryForItem(itemToDeliver)}, Correct NPC: {npcName.Equals(objective.deliverToNpcName, StringComparison.OrdinalIgnoreCase)}");
         }
     }
     
@@ -275,7 +318,7 @@ public class QuestManager : MonoBehaviour
         
         if (!string.IsNullOrEmpty(objective.rewardItem))
         {
-            RecieveRewardItem(objective.rewardItem);
+            //RecieveRewardItem(objective.rewardItem); // chenge this to recieve objective reward tiem
         }
         
         // Find which quest this objective belongs to for UI update
@@ -291,6 +334,11 @@ public class QuestManager : MonoBehaviour
     {
         // take the string reward item and find the gameobject with that name?
         gameManager.playerInventory.AddItemToInventory(rewardItem);
+
+        if (uiManager != null)
+        {
+            uiManager.ShowAquireReward(rewardItem); // Show the reward recieved UI
+        }
         Debug.Log($"Received reward item: {rewardItem}");
     }
 
@@ -301,7 +349,9 @@ public class QuestManager : MonoBehaviour
         {
             foreach (QuestObjective objective in quest.questObjectives)
             {
-                if (objective.requiredItemOrnpcName == npcName)
+                if (objective.objectiveType == QuestObjective.ObjectiveType.TalkTo && 
+                objective.requiredItemOrnpcName.Equals(npcName, StringComparison.OrdinalIgnoreCase) &&
+                !objective.isCompleted)
                 {
                     return true; // found an active quest that requires talking to this NPC
                 }

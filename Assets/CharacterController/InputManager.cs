@@ -6,6 +6,7 @@ public class InputManager : MonoBehaviour, GameInput.IPlayerActions
 {
     private GameInput gameInput;
     private DialogueManager dialogueManager;
+    private UIManager uiManager;
 
     void Awake()
     {
@@ -13,6 +14,12 @@ public class InputManager : MonoBehaviour, GameInput.IPlayerActions
         gameInput.Player.Enable(); // enable input system
 
         gameInput.Player.SetCallbacks(this);
+
+        uiManager = FindObjectOfType<UIManager>();
+        if (uiManager == null)
+        {
+            Debug.LogWarning("UIManager not found in scene");
+        }
     }
 
     public void OnMove(InputAction.CallbackContext context) // player input updates by vector2
@@ -24,6 +31,14 @@ public class InputManager : MonoBehaviour, GameInput.IPlayerActions
         }
     }
 
+    public void OnOpenInventory(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            Debug.Log("Open Inventory input received");
+            InputActions.OpenInventoryEvent?.Invoke();
+        }
+    }
     public void FreezeInput(bool isInDialogue)
     {
         // if player is currently in dialogue, freeze input
@@ -57,4 +72,5 @@ public static class InputActions // can expand to add more actions for the playe
     public static Action InteractEvent; 
     public static Action InteractEventCancelled;
     public static Action dialogueEvent;
+    public static Action OpenInventoryEvent;
 }
