@@ -4,6 +4,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+[System.Serializable]
+public class ItemIcon
+{
+    public string itemName;
+    public Sprite sprite;
+}
+
 public class UIManager : MonoBehaviour
 {
     public GameManager gameManager;
@@ -30,19 +37,32 @@ public class UIManager : MonoBehaviour
     [Header("Quest UI")]
     public GameObject questNotificationPanel;
     public GameObject questCompletedPanel;
+  
+    public TextMeshProUGUI questTitleText;
+    public TextMeshProUGUI questDescriptionText;
+    public TextMeshProUGUI currentObjectiveText;
+    public TextMeshProUGUI questCompletedTitleText;
+
+    [Header("Quest Reward UI")]
     [SerializeField] private GameObject rewardPanel;
     [SerializeField] private TextMeshProUGUI rewardItemText;
     [SerializeField] private Image rewardItemIcon;
 
     [Header("Player Inventory UI")]
     public GameObject inventoryPanel;
-    public GameObject[] inventoryItems; // inventory item UI element
+    public GameObject inventorySlotPrefab; // inventory item UI element
 
-    public TextMeshProUGUI questTitleText;
-    public TextMeshProUGUI questDescriptionText;
-    public TextMeshProUGUI currentObjectiveText;
-    public TextMeshProUGUI questCompletedTitleText;
+    public List<ItemIcon> itemIcons; // specific sprites for each item in inventory
+    private Dictionary<string, Sprite> itemSpriteDict = new Dictionary<string, Sprite>();
 
+    private void Awake()
+    {
+        foreach (var icon in itemIcons)
+        {
+            if (!itemSpriteDict.ContainsKey(icon.itemName))
+                itemSpriteDict.Add(icon.itemName, icon.sprite);
+        }
+    }
     void Start()
     {
         if (questManager == null)
@@ -53,7 +73,7 @@ public class UIManager : MonoBehaviour
         questNotificationPanel.SetActive(false);
         controlsDisplay.SetActive(false);
     }
-
+    
     public void DisplayMainMenuUI()
     {
         ClearUI();
@@ -124,9 +144,6 @@ public class UIManager : MonoBehaviour
         {
             currentObjectiveText.text = quest.questObjectives[0].objectiveDescription;
         }
-
-        //yield return new WaitForSeconds(5);
-        //questNotificationPanel.SetActive(false);
     }
 
     // Update the quest objective UI when a quest is updated
@@ -140,8 +157,6 @@ public class UIManager : MonoBehaviour
             questNotificationPanel.SetActive(true);
             questTitleText.text = quest.questName;
             currentObjectiveText.text = currentObjective.objectiveDescription;
-
-            //StartCoroutine(HideQuestNotificationAfterDelay());
         }
     }
 
@@ -180,24 +195,26 @@ public class UIManager : MonoBehaviour
         rewardPanel.SetActive(false);
     }
 
+    public void HideQuestNotificationPanel()
+    {
+        questNotificationPanel.SetActive(false);
+    }
+
     // use GetInventoryItemList() to get item list from inventory, then use this method to display item icons in UI
     public void ShowInventory()
     {
-        if (inventoryPanel != null)
+        if (inventorySlotPrefab == null || inventoryPanel == null)
         {
-            bool isActive = inventoryPanel.activeSelf;
-            inventoryPanel.SetActive(!isActive);
-        
-            // Additional logic for when inventory is opened/closed
-            if (!isActive)
-            {
-                // Refresh inventory display when opening
-                //UpdateInventoryUI();
-            }
+            Debug.LogError("UIManager: inventorySlotPrefab or inventoryPanel is not assigned!");
+            return;
         }
-        else
+        
+        inventoryPanel.SetActive(true);
+        
+        foreach (string item in PlayerInventory.Instance.GetInventoryItemList())
         {
-            Debug.LogError("Inventory panel reference is missing in UIManager");
+            GameObject newSlot = Instantiate(inventorySlotPrefab, inventoryPanel.transform);
+            Image image = newSlot.GetComponent<Image>();
         }
     }
 }

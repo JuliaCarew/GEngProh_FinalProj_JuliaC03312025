@@ -185,10 +185,12 @@ public class QuestManager : MonoBehaviour
             }
             if (!string.IsNullOrEmpty(questToComplete.completeDialogue)) // if the quest has a complete dialogue
             {
-                dialogueManager.StartDialogue(new string[] { questToComplete.completeDialogue }); // start the dialogue for the quest
+                //dialogueManager.StartDialogue(new string[] { questToComplete.completeDialogue }); // start the dialogue for the quest
+                // display NPCs conditional dialogue instead?
             }
             
             uiManager.DisplayQuestCompletedNotification(questToComplete); // UIMANAGER: Display quest completed UI notification
+            uiManager.HideQuestNotificationPanel(); // hide the quest notification panel
 
             questToComplete.onQuestCompleted?.Invoke(); // invoke the action for when the quest is completed
 

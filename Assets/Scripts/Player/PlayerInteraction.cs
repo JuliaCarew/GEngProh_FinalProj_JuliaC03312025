@@ -44,12 +44,12 @@ public class PlayerInteraction : MonoBehaviour
         // Call the method to open inventory UI
         if (uiManager != null)
         {
-            uiManager.ShowInventory();
-            Debug.Log("Opening inventory panel");
+            //uiManager.ShowInventory();
+            //Debug.Log("Opening inventory panel");
         }
         else
         {
-            Debug.LogWarning("UIManager not found, can't open inventory");
+            //Debug.LogWarning("UIManager not found, can't open inventory");
         }
     }
 
