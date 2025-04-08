@@ -21,7 +21,7 @@ public class UIManager : MonoBehaviour
     [Header("Info Interactible UI")]
     public GameObject infoObj;
     public TextMeshProUGUI infoText;
-    string infoString = "INFO";
+    string infoString = "N - SunForge Mountain\r\nE - Village Graveyard\r\nS - Vibrant Meadow\r\nW - Crystal Cavern";
 
     [Header("PickUp Interactible UI")]
     public GameObject pickUpObj;
