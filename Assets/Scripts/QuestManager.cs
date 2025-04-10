@@ -5,15 +5,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 [System.Serializable]
-public class QuestObjective{
+public class QuestObjective{ // class for quest objectives
     public enum ObjectiveType
     {
         Nothing, // no objective, safeguard for when no objective is set
-        Collect, // collect a certain item
-        TalkTo, // talk to a certain npc, complete certain dialogues
+        Collect, // collect a certain quest item
+        TalkTo, // talk to a quest npc
         Explore, // explore a certain area
-        Deliver, // AND Escort, same logic. bring item/person to another location
-        Kill // killing npc or monster
+        Deliver, // bring a quest item to a quest NPC
     }
     public ObjectiveType objectiveType; // type of objective
     public string objectiveDescription;
@@ -24,7 +23,7 @@ public class QuestObjective{
 }
 
 [System.Serializable]
-public class Quest{
+public class Quest{ // class for quests
     public string questName;
     [TextArea]
     public string questDescription; // description of the quest
@@ -37,7 +36,7 @@ public class Quest{
     [TextArea]
     public string startDialogue; // dialogue that is triggered when the quest is started
     [TextArea]
-    public string completeDialogue; // dialogue that is triggered when the quest is completed
+    public string completeDialogue; 
 
     public Action onQuestStarted; // action that is triggered when the quest is started
     public Action onQuestCompleted; // action that is triggered when the quest is completed
@@ -69,24 +68,25 @@ public class QuestManager : MonoBehaviour
     {
         Quest questToStart = quests.Find(q => q.questName == questName); // find the quest in the list of quests
 
-        if (questToStart != null && !questToStart.isStarted) // if the quest is found and not started
+        if (questToStart != null && !questToStart.isStarted) 
         {
             questToStart.isStarted = true; // set the quest as started
             activeQuests.Add(questToStart); // add the quest to the list of active quests
 
-            if (!string.IsNullOrEmpty(questToStart.startDialogue)) // if the quest has a start dialogue
+            if (!string.IsNullOrEmpty(questToStart.startDialogue)) 
             {
                 dialogueManager.StartDialogue(new string[] { questToStart.startDialogue }); // start the dialogue for the quest
             }
 
-            uiManager.DisplayQuestStartNotification(questToStart); // UIMANAGER: Display quest start UI notification
+            uiManager.DisplayQuestStartNotification(questToStart); // display quest start UI notification
 
-            questToStart.onQuestStarted?.Invoke(); // invoke the action for when the quest is started
-
+            questToStart.onQuestStarted?.Invoke(); 
+            UpdateQuestIndicators();
             Debug.Log($"Quest Started: {questName}");
         }
     }
     
+    // _______________________ Check for objective completion _______________________ //
     public void CheckObjectiveCompletion(QuestObjective.ObjectiveType objectiveType, string objectiveTarget, string secondaryTarget = "")
     {
         if (activeQuests == null)
@@ -134,7 +134,6 @@ public class QuestManager : MonoBehaviour
                             Deliver(objectiveTarget, secondaryTarget, objective);
                         }
                     }
-                    // For other objective types, check if the target matches the required name
                     else if (objective.requiredItemOrnpcName.ToLower() == objectiveTarget.ToLower())
                     {
                         switch (objectiveType)
@@ -148,9 +147,6 @@ public class QuestManager : MonoBehaviour
                             case QuestObjective.ObjectiveType.Explore:
                                 Explore(objectiveTarget, objective);
                                 break;
-                            case QuestObjective.ObjectiveType.Kill:
-                                Kill(objectiveTarget, 1, objective);
-                                break;
                             default:
                                 break;
                         }
@@ -158,7 +154,7 @@ public class QuestManager : MonoBehaviour
                     }
                 }
                 if (!objective.isCompleted){
-                    questCompleted = false; // if any objective is not completed, the quest is not completed
+                    questCompleted = false; 
                 }
             }
             // Complete the quest if all objectives are done
@@ -169,15 +165,31 @@ public class QuestManager : MonoBehaviour
         }
     }
 
+    // _______________________ Complete the quest _______________________ //
     public void CompleteQuest(string questName)
     {
         Quest questToComplete = activeQuests.Find(q => q.questName == questName); // find the quest in the list of active quests
 
         if (questToComplete != null && !questToComplete.isCompleted) // if the quest is found and not completed
         {
-            questToComplete.isCompleted = true; // set the quest as completed
+            questToComplete.isCompleted = true;
             activeQuests.Remove(questToComplete); // remove the quest from the list of active quests
             completedQuests.Add(questToComplete); // add the quest to the list of completed quests
+
+            foreach (var objective in questToComplete.questObjectives)
+            { // turn indicators off for all objectives in the quest
+                GameObject target = GameObject.Find(objective.requiredItemOrnpcName);
+                if (target != null)
+                    uiManager.ToggleQuestIndicator(target, false);
+
+                if (objective.objectiveType == QuestObjective.ObjectiveType.Deliver &&
+                    !string.IsNullOrEmpty(objective.deliverToNpcName))
+                {
+                    GameObject deliveryNpc = GameObject.Find(objective.deliverToNpcName);
+                    if (deliveryNpc != null)
+                        uiManager.ToggleQuestIndicator(deliveryNpc, false);
+                }
+            }
 
             if (!string.IsNullOrEmpty(questToComplete.questRewardItem)) // give player reqard item for completing quest
             {
@@ -185,21 +197,20 @@ public class QuestManager : MonoBehaviour
             }
             if (!string.IsNullOrEmpty(questToComplete.completeDialogue)) // if the quest has a complete dialogue
             {
-                //dialogueManager.StartDialogue(new string[] { questToComplete.completeDialogue }); // start the dialogue for the quest
-                // display NPCs conditional dialogue instead?
+                //dialogueManager.StartDialogue(new string[] { questToComplete.completeDialogue }); // start the completed dialogue for the quest
+                // displays NPCs conditional dialogue instead
             }
             
-            uiManager.DisplayQuestCompletedNotification(questToComplete); // UIMANAGER: Display quest completed UI notification
-            uiManager.HideQuestNotificationPanel(); // hide the quest notification panel
+            uiManager.DisplayQuestCompletedNotification(questToComplete); 
+            uiManager.HideQuestNotificationPanel(); 
 
             questToComplete.onQuestCompleted?.Invoke(); // invoke the action for when the quest is completed
 
             Debug.Log($"Quest Completed: {questName}");
-            // set all quest panel UI to false
         }
     }
 
-    // Create a new quest
+    // _______________________ Create a new quest _______________________ //
     public Quest CreateQuest(string questName, string description, string rewardItem)
     {
         Quest newQuest = new Quest
@@ -207,12 +218,12 @@ public class QuestManager : MonoBehaviour
             questName = questName,
             questDescription = description,
             questRewardItem = rewardItem
-        }; // create a new quest object
+        }; // create a new quest from class
         quests.Add(newQuest); // add the new quest to the list of quests
         return newQuest; 
     }
 
-    // Add a new objective to the quest
+    // _______________________ Add a new objective to the quest _______________________ //
     public void AddQuestObjective(Quest quest, QuestObjective.ObjectiveType type, string objectiveDescription, string requiredTarget, string rewardItem)
     {
         QuestObjective newObjective = new QuestObjective
@@ -221,25 +232,25 @@ public class QuestManager : MonoBehaviour
             objectiveDescription = objectiveDescription,
             requiredItemOrnpcName = requiredTarget,
             rewardItem = rewardItem
-        }; // create a new objective object
+        }; // create a new objective from class
 
         quest.questObjectives.Add(newObjective); // add the new objective to the quest
         Debug.Log($"Objective Added: {objectiveDescription} to quest {quest.questName}");
     }
 
-    // Check if a specific quest is active
+    // Check list of Active quests
     public bool IsQuestActive(string questName)
     {
-        return activeQuests.Exists(q => q.questName == questName); // check if the quest is in the list of active quests
+        return activeQuests.Exists(q => q.questName == questName); 
     }
 
-    // Check if a specific quest is completed
+    // Check list of Completed quests
     public bool IsQuestCompleted(string questName)
     {
-        return completedQuests.Exists(q => q.questName == questName); // check if the quest is in the list of completed quests
+        return completedQuests.Exists(q => q.questName == questName); 
     }
 
-    // Objective types
+    // _______________________ Objective types _______________________ //
     private void Collect(string itemName, QuestObjective objective)
     {
         // check the player's inventory for the 'item to collect'
@@ -293,8 +304,8 @@ public class QuestManager : MonoBehaviour
         npcName.ToLower() == objective.deliverToNpcName.ToLower())
         {
             // Remove the item from inventory
-            gameManager.playerInventory.RemoveItemFromInventory(itemToDeliver);
-        
+            gameManager.playerInventory.RemoveItemFromInventory(itemToDeliver);            
+
             // Complete the objective
             CompleteObjective(objective);
         
@@ -305,13 +316,8 @@ public class QuestManager : MonoBehaviour
             Debug.Log($"Cannot complete delivery objective. Item in inventory: {gameManager.playerInventory.CheckInventoryForItem(itemToDeliver)}, Correct NPC: {npcName.Equals(objective.deliverToNpcName, StringComparison.OrdinalIgnoreCase)}");
         }
     }
+    // _______________________ Objective logic end _______________________ //
     
-    private void Kill(string enemyName, int amountToKill, QuestObjective objective)
-    {
-        // specify an enemy with string name, if player kills an enemy called that name, update quest objective
-        CompleteObjective(objective);
-    }
-
     private void CompleteObjective(QuestObjective objective)
     {
         if (objective == null) return;
@@ -320,7 +326,7 @@ public class QuestManager : MonoBehaviour
         
         if (!string.IsNullOrEmpty(objective.rewardItem))
         {
-            //RecieveRewardItem(objective.rewardItem); // chenge this to recieve objective reward tiem
+            gameManager.playerInventory.AddItemToInventory(objective.rewardItem); // add the reward item to inventory(making some slots null)
         }
         
         // Find which quest this objective belongs to for UI update
@@ -329,7 +335,7 @@ public class QuestManager : MonoBehaviour
         {
             uiManager.UpdateQuestObjectiveUI(parentQuest);
         }
-        
+        UpdateQuestIndicators();
         Debug.Log($"Objective Completed: {objective.objectiveDescription}");
     }
     private void RecieveRewardItem(string rewardItem)
@@ -360,5 +366,36 @@ public class QuestManager : MonoBehaviour
             }
         }
         return false; // no active TalkTo objective for this NPC
+    }
+
+    // _______________________ Quest indicators _______________________ //
+    public void UpdateQuestIndicators()
+    {
+        foreach (Quest quest in activeQuests)
+        {
+            foreach (QuestObjective objective in quest.questObjectives)
+            {
+                if (objective.isCompleted) continue;
+
+                // Get NPC or item GameObject by name
+                GameObject target = GameObject.Find(objective.requiredItemOrnpcName);
+
+                if (target != null)
+                {
+                    uiManager.ToggleQuestIndicator(target, true);
+                }
+
+                // If it's a delivery quest, also highlight the delivery target NPC
+                if (objective.objectiveType == QuestObjective.ObjectiveType.Deliver &&
+                    !string.IsNullOrEmpty(objective.deliverToNpcName))
+                {
+                    GameObject deliveryNpc = GameObject.Find(objective.deliverToNpcName);
+                    if (deliveryNpc != null)
+                    {
+                        uiManager.ToggleQuestIndicator(deliveryNpc, true);
+                    }
+                }
+            }
+        }
     }
 }

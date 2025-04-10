@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerInventory : MonoBehaviour
 {
-    //public List<GameObject> inventory = new List<GameObject>();
+    private UIManager uiManager; // Reference to UIManager for updating inventory UI  
     public static PlayerInventory Instance;
     public List<string> inventory = new List<string>();
     private void Awake()
@@ -19,10 +19,19 @@ public class PlayerInventory : MonoBehaviour
             Destroy(gameObject);
         }
     }
+    private void Start()
+    {
+        uiManager = FindObjectOfType<UIManager>();
+        if (uiManager == null)
+        {
+            Debug.LogError("UIManager not found in the scene. Make sure it is present.");
+        }
+    }
 
     public void AddItemToInventory(string item){ // gets item from string, adds it to list 
         inventory.Add(item);
         Debug.Log($"Added {item} to inventory. Total items: {inventory.Count}");
+        uiManager.UpdateInventoryUI(inventory);
     }
     public bool CheckInventoryForItem(string item){ // when checking for unique dialogue, get item name from string
         return inventory.Contains(item);
@@ -32,10 +41,7 @@ public class PlayerInventory : MonoBehaviour
         if (inventory.Remove(item)) // Remove by name
         {
             Debug.Log($"Removed {item} from inventory. Total items: {inventory.Count}");
-        }
-        else
-        {
-            Debug.Log($"Item {item} not found in inventory.");
+            uiManager.UpdateInventoryUI(inventory);
         }
     }
     public void ClearInventory(){ // clear inventory

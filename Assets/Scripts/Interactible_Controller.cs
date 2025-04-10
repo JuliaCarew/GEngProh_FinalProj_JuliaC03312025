@@ -130,7 +130,7 @@ public class Interactible_Controller : MonoBehaviour
     private void Info()
     {
         Debug.Log($"InterController: displaying info text");
-        StartCoroutine(gameManager.uiManager.DisplayInfoText());
+        StartCoroutine(gameManager.uiManager.DisplayInfoText(defaultDialogue[0]));
     }
 
     private void Dialogue()  
@@ -172,7 +172,7 @@ public class Interactible_Controller : MonoBehaviour
     {
         switch (condition.conditionType)
         {
-            case DialogueCondition.ConditionType.ItemCollected: // take out dialoguecondition?
+            case DialogueCondition.ConditionType.ItemCollected: // take out dialoguecondition? not working if MULTIPLE conidional dialogue is this
                 Debug.Log("checking dialogue condition type: Item Collected");
                 return gameManager.playerInventory.CheckInventoryForItem(condition.requiredConditionName);
                 
@@ -274,13 +274,5 @@ public class Interactible_Controller : MonoBehaviour
     {
         yield return new WaitForSeconds(0.1f); // give time for initialization
         CheckExplorationObjectives(); 
-    }
-    // when a monster is killed
-    public void NotifyMonsterKilled(string monsterName)
-    {
-        questManager.CheckObjectiveCompletion(
-            QuestObjective.ObjectiveType.Kill,
-            monsterName.ToLower()
-        );
     }
 }

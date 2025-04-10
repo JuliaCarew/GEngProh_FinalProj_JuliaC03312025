@@ -4,31 +4,24 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-[System.Serializable]
-public class ItemIcon
-{
-    public string itemName;
-    public Sprite sprite;
-}
-
 public class UIManager : MonoBehaviour
 {
     public GameManager gameManager;
     public QuestManager questManager;
-
-    [Header("Controls")]
-    public GameObject controlsDisplay;
 
     [Header("UI Screens")]
     public GameObject menuUI;
     public GameObject gameplayUI;
     public GameObject pausedUI;
     public GameObject optionsUI;
+    public GameObject winScreenUI;
+
+    [Header("Location Text")]
+    public TextMeshProUGUI locationText;
 
     [Header("Info Interactible UI")]
     public GameObject infoObj;
     public TextMeshProUGUI infoText;
-    string infoString = "N - SunForge Mountain\r\nE - Village Graveyard\r\nS - Vibrant Meadow\r\nW - Crystal Cavern";
 
     [Header("PickUp Interactible UI")]
     public GameObject pickUpObj;
@@ -50,19 +43,9 @@ public class UIManager : MonoBehaviour
 
     [Header("Player Inventory UI")]
     public GameObject inventoryPanel;
-    public GameObject inventorySlotPrefab; // inventory item UI element
+    [SerializeField] private List<Image> itemSlots; // UI Image slots
+    [SerializeField] private Sprite emptySprite,wood,rock,rubyPommel,goldenWingedCowFeather,banishedKnightsHelm,osmiumBlade,theLegendarySword, lily, piece, maria, walkingStick, stick,trap; 
 
-    public List<ItemIcon> itemIcons; // specific sprites for each item in inventory
-    private Dictionary<string, Sprite> itemSpriteDict = new Dictionary<string, Sprite>();
-
-    private void Awake()
-    {
-        foreach (var icon in itemIcons)
-        {
-            if (!itemSpriteDict.ContainsKey(icon.itemName))
-                itemSpriteDict.Add(icon.itemName, icon.sprite);
-        }
-    }
     void Start()
     {
         if (questManager == null)
@@ -71,19 +54,67 @@ public class UIManager : MonoBehaviour
         }
         // start all quest objects as inactive/blank
         questNotificationPanel.SetActive(false);
-        controlsDisplay.SetActive(false);
     }
     
+    public void UpdateInventoryUI(List<string> inventory)
+    {
+        Debug.Log("UIManager: Updating invenotry UI.");
+        for (int i = 0; i < itemSlots.Count; i++)
+        {
+            if (i < inventory.Count)
+            {
+                itemSlots[i].sprite = GetItemSprite(inventory[i]);
+                itemSlots[i].enabled = true; // Enable the slot image
+                itemSlots[i].color = new Color(1f, 1f, 1f, 1f); // Full opacity
+            }
+            else
+            {
+                itemSlots[i].sprite = emptySprite;
+                itemSlots[i].enabled = true; 
+                itemSlots[i].color = new Color(1f, 1f, 1f, 0.5f); // Half opacity for empty slots
+            }
+        }
+    }
+    private Sprite GetItemSprite(string itemName)
+    {
+        Debug.Log($"Getting sprite for item: {itemName} (lowercase: {itemName.ToLower()})");
+        switch (itemName.ToLower()) 
+        {
+            case "wood": return wood;
+            case "rock": return rock;
+            case "rubypommel": return rubyPommel;
+            case "goldenwingedcowfeather": return goldenWingedCowFeather;
+            case "banishedknightshelm": return banishedKnightsHelm; 
+            case "osmiumblade": return osmiumBlade;
+            case "thelegendarysword": return theLegendarySword;
+            case "lily": return lily;
+            case "piece": return piece;
+            case "maria": return maria;
+            case "walkingstick": return walkingStick;
+            case "stick": return stick;
+            case "trap": return trap;
+            default: return emptySprite;
+        }
+    }
+
+    public void ToggleQuestIndicator(GameObject target, bool show)
+    {
+        Transform indicator = target.transform.Find("QuestIndicator");
+        if (indicator != null)
+        {
+            indicator.gameObject.SetActive(show);
+        }
+    }
+
     public void DisplayMainMenuUI()
     {
-        ClearUI();
+        ClearUI();        
         menuUI.SetActive(true);
     }
     public void DisplayGameplayUI()
     {
         ClearUI();
         gameplayUI.SetActive(true);
-        controlsDisplay.SetActive(true);
     }
     public void DisplayPausedUI()
     {
@@ -104,13 +135,20 @@ public class UIManager : MonoBehaviour
         if (optionsUI != null) optionsUI.SetActive(false);
     }
 
+    public void UpdateLocationText(string locationName)
+    {
+        if (locationText != null)
+        {
+            locationText.text = locationName;
+        }
+    }
     // ***** INTERACTIBLES ***** //
-    public IEnumerator DisplayInfoText()
+    public IEnumerator DisplayInfoText(string text)
     {
         Debug.Log("Started DisplayInfoText Coroutine");
 
         infoObj.SetActive(true);
-        infoText.text = infoString;
+        infoText.text = text;
 
         yield return new WaitForSeconds(5);
         infoObj.SetActive(false);
@@ -176,13 +214,6 @@ public class UIManager : MonoBehaviour
         questCompletedPanel.SetActive(false);
     }
 
-    // Hide the quest notification panel after a delay
-    private IEnumerator HideQuestNotificationAfterDelay()
-    {
-        yield return new WaitForSeconds(5);
-        questNotificationPanel.SetActive(false);
-    }
-
     public void ShowAquireReward(string rewardItem)
     {
         rewardPanel.SetActive(true);
@@ -200,21 +231,9 @@ public class UIManager : MonoBehaviour
         questNotificationPanel.SetActive(false);
     }
 
-    // use GetInventoryItemList() to get item list from inventory, then use this method to display item icons in UI
-    public void ShowInventory()
+    public void DisplayWinScreenUI()
     {
-        if (inventorySlotPrefab == null || inventoryPanel == null)
-        {
-            Debug.LogError("UIManager: inventorySlotPrefab or inventoryPanel is not assigned!");
-            return;
-        }
-        
-        inventoryPanel.SetActive(true);
-        
-        foreach (string item in PlayerInventory.Instance.GetInventoryItemList())
-        {
-            GameObject newSlot = Instantiate(inventorySlotPrefab, inventoryPanel.transform);
-            Image image = newSlot.GetComponent<Image>();
-        }
+        //if (gameplayUI != null) gameplayUI.SetActive(false);
+        winScreenUI.SetActive(true);
     }
 }

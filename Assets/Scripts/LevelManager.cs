@@ -34,6 +34,13 @@ public class LevelManager : MonoBehaviour
         {
             gameManager.uiManager = FindObjectOfType<UIManager>();
         }
+
+        // Update the location text with the current scene name
+        if (gameManager.uiManager != null)
+        {
+            gameManager.uiManager.UpdateLocationText(scene.name);
+        }
+        
         StartCoroutine(DelayedSceneLoadActions());
     }
     private IEnumerator DelayedSceneLoadActions()
