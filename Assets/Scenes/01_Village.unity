@@ -1884,6 +1884,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
+--- !u!1 &215659060 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4016434312510585297, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
+  m_PrefabInstance: {fileID: 849542236}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &235438347
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -39275,7 +39280,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 4
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -44977,15 +44982,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5950010844519897521, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.143014
+      value: 0.09280484
       objectReference: {fileID: 0}
     - target: {fileID: 5950010844519897521, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.143014
+      value: 0.09280484
       objectReference: {fileID: 0}
     - target: {fileID: 5950010844519897521, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.0298173
+      value: 0.08361406
       objectReference: {fileID: 0}
     - target: {fileID: 5950010844519897521, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_LocalPosition.x
@@ -45029,19 +45034,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Size.x
-      value: 0.24781755
+      value: 4.68626
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Size.y
-      value: 0.24213248
+      value: 3.883932
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Offset.x
-      value: 0.0035469085
+      value: -0.015419483
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Offset.y
-      value: -0.009091437
+      value: -0.21773553
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_SpriteTilingProperty.newSize.x
@@ -45053,11 +45058,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.x
-      value: 0.32
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 7462176900670957074, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_SpriteTilingProperty.oldSize.y
-      value: 0.32
+      value: 4.49
       objectReference: {fileID: 0}
     - target: {fileID: 8312010268214014535, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Size.x
@@ -45070,7 +45075,7 @@ PrefabInstance:
     - target: {fileID: 8312010268214014535, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -1941488737, guid: a518d565ab5e1a64dacc1e6d8574bedf, type: 3}
+      objectReference: {fileID: 21300000, guid: dc6265c092af03f4ab01baaa421bc945, type: 3}
     - target: {fileID: 8312010268214014535, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -45103,13 +45108,37 @@ PrefabInstance:
     - {fileID: 9131832289754043389, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 4016434312510585297, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 849542241}
   m_SourcePrefab: {fileID: 100100000, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
 --- !u!4 &849542237 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5950010844519897521, guid: 9f8238e9d02e3c5439fb5474b60e56d7, type: 3}
   m_PrefabInstance: {fileID: 849542236}
   m_PrefabAsset: {fileID: 0}
+--- !u!95 &849542241
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 215659060}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a79bd2e3d2f3abf47b495e332a35e27d, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &851894260
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -47137,7 +47166,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 6
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
@@ -69423,7 +69452,7 @@ TilemapRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_ChunkSize: {x: 32, y: 32, z: 32}
   m_ChunkCullingBounds: {x: 0, y: 0, z: 0}
   m_MaxChunkCount: 16
